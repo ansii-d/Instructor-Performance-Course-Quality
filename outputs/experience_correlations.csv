@@ -1,0 +1,6 @@
+Analysis,n,coefficient,p_value
+Experience vs Teacher Rating (Pearson),60,0.5980353982941562,4.5175788431532947e-07
+Experience vs Teacher Rating (Spearman),60,0.6705270498793747,4.602570912700852e-09
+Experience vs Associated Course Rating (Pearson),60,-0.1375129038477075,0.2947533759043457
+Teacher Rating vs Transaction Count (Pearson),60,0.31828684507429844,0.013197287888154514
+Teacher Rating vs Transaction Count (Spearman),60,-0.012022071087860724,0.9273599836170755

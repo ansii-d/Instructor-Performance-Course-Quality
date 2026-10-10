@@ -1,0 +1,2 @@
+Instructor count,Course count,Transaction count,Average teacher rating,Average course rating,Average experience (years),Rating consistency index,Teacher rating / transaction correlation,Zero-amount transaction share,Mean transaction amount,Median transaction amount
+60,60,10000,3.1249999999999996,3.097833333333333,6.283333333333333,0.45592506647032527,0.3182868450742982,0.6403,91.132347,0.0

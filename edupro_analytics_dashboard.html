@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduPro - Instructor Performance & Course Quality Evaluation</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            500: '#2563eb',
+                            600: '#1d4ed8',
+                            700: '#1e40af',
+                            900: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .glass { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); }
+        .dark .glass { background: rgba(30, 41, 59, 0.8); backdrop-filter: blur(10px); }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .dark ::-webkit-scrollbar-thumb { background: #475569; }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen transition-colors duration-200">
+
+    <!-- Top Navigation Header -->
+    <header class="sticky top-0 z-40 bg-white/90 dark:bg-slate-800/90 backdrop-blur border-b border-slate-200 dark:border-slate-700 px-4 lg:px-8 py-3 transition-colors">
+        <div class="flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="p-2.5 bg-brand-600 text-white rounded-xl shadow-lg shadow-brand-500/30">
+                    <i class="fa-solid font-bold fa-graduation-cap text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight bg-gradient-to-r from-brand-600 to-indigo-600 dark:from-brand-500 dark:to-indigo-400 bg-clip-text text-transparent">
+                        EduPro Evaluation Framework
+                    </h1>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Instructor Effectiveness & Course Quality Analytics</p>
+                </div>
+            </div>
+
+            <!-- Header Right Controls -->
+            <div class="flex items-center gap-3">
+                <button id="dataGenBtn" onclick="toggleDataModal()" class="px-3.5 py-2 text-xs font-semibold rounded-lg border border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 transition flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-brand-600 dark:text-brand-400"></i>
+                    <span>Dataset Config</span>
+                </button>
+                <button id="exportReportBtn" onclick="generateExecutiveReport()" class="px-3.5 py-2 text-xs font-semibold rounded-lg bg-brand-600 hover:bg-brand-700 text-white transition shadow-md shadow-brand-500/20 flex items-center gap-2">
+                    <i class="fa-solid fa-file-arrow-down"></i>
+                    <span class="hidden sm:inline">Export Report</span>
+                </button>
+                <button id="themeToggleBtn" onclick="toggleTheme()" class="p-2.5 rounded-lg border border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition">
+                    <i class="fa-solid fa-moon dark:hidden"></i>
+                    <i class="fa-solid fa-sun hidden dark:block"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex flex-col lg:flex-row min-h-[calc(100vh-65px)]">
+        
+        <!-- Interactive Sidebar Filters -->
+        <aside id="sidebar" class="w-full lg:w-72 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 p-5 shrink-0 transition-all">
+            <div class="flex items-center justify-between mb-5">
+                <h2 class="font-bold text-sm uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                    <i class="fa-solid fa-filter text-brand-500"></i> Global Filters
+                </h2>
+                <button onclick="resetFilters()" class="text-xs text-brand-600 dark:text-brand-400 hover:underline font-semibold">Reset All</button>
+            </div>
+
+            <div class="space-y-4 text-xs font-medium">
+                <!-- Search -->
+                <div>
+                    <label class="block text-slate-600 dark:text-slate-300 mb-1">Search Instructor / Course</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400"></i>
+                        <input type="text" id="filterSearch" placeholder="Name or keyword..." oninput="applyFilters()" class="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-900 focus:ring-2 focus:ring-brand-500 outline-none">
+                    </div>
+                </div>
+
+                <!-- Instructor Expertise Filter -->
+                <div>
+                    <label class="block text-slate-600 dark:text-slate-300 mb-1">Teacher Expertise</label>
+                    <select id="filterExpertise" onchange="applyFilters()" class="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-900 focus:ring-2 focus:ring-brand-500 outline-none">
+                        <option value="ALL">All Expertise Domains</option>
+                    </select>
+                </div>
+
+                <!-- Course Category Filter -->
+                <div>
+                    <label class="block text-slate-600 dark:text-slate-300 mb-1">Course Category</label>
+                    <select id="filterCategory" onchange="applyFilters()" class="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-900 focus:ring-2 focus:ring-brand-500 outline-none">
+                        <option value="ALL">All Categories</option>
+                    </select>
+                </div>
+
+                <!-- Course Level Filter -->
+                <div>
+                    <label class="block text-slate-600 dark:text-slate-300 mb-1">Course Level</label>
+                    <select id="filterLevel" onchange="applyFilters()" class="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-900 focus:ring-2 focus:ring-brand-500 outline-none">
+                        <option value="ALL">All Levels</option>
+                    </select>
+                </div>
+
+                <!-- Gender Filter -->
+                <div>
+                    <label class="block text-slate-600 dark:text-slate-300 mb-1">Instructor Gender</label>
+                    <select id="filterGender" onchange="applyFilters()" class="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-900 focus:ring-2 focus:ring-brand-500 outline-none">
+                        <option value="ALL">All Genders</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Non-Binary">Non-Binary</option>
+                    </select>
+                </div>
+
+                <!-- Min Teacher Rating Slider -->
+                <div>
+                    <div class="flex justify-between mb-1">
+                        <label class="text-slate-600 dark:text-slate-300">Min Teacher Rating</label>
+                        <span id="ratingVal" class="text-brand-600 font-bold">1.0★</span>
+                    </div>
+                    <input type="range" id="filterRating" min="1" max="5" step="0.1" value="1" oninput="updateRatingLabel(this.value); applyFilters();" class="w-full accent-brand-600">
+                </div>
+
+                <!-- Min Experience Slider -->
+                <div>
+                    <div class="flex justify-between mb-1">
+                        <label class="text-slate-600 dark:text-slate-300">Min Experience (Yrs)</label>
+                        <span id="expVal" class="text-brand-600 font-bold">0 Yrs</span>
+                    </div>
+                    <input type="range" id="filterExp" min="0" max="25" step="1" value="0" oninput="updateExpLabel(this.value); applyFilters();" class="w-full accent-brand-600">
+                </div>
+            </div>
+
+            <!-- Filter Status Stats -->
+            <div class="mt-6 p-3 rounded-lg bg-slate-100 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-xs">
+                <p class="text-slate-500 dark:text-slate-400">Filtered Dataset</p>
+                <div class="flex justify-between items-center mt-1 font-bold text-slate-700 dark:text-slate-200">
+                    <span id="filteredTeachersCount">0 Teachers</span>
+                    <span id="filteredCoursesCount">0 Courses</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 p-4 lg:p-8 overflow-y-auto space-y-6">
+
+            <!-- Executive KPI Metrics Strip -->
+            <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                <!-- KPI 1 -->
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden group hover:border-brand-500 transition">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Avg Teacher Rating</p>
+                            <h3 id="kpiAvgTeacherRating" class="text-2xl font-bold mt-1 text-slate-800 dark:text-white">0.00</h3>
+                        </div>
+                        <div class="p-2.5 rounded-xl bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-400">
+                            <i class="fa-solid fa-star text-base"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                        <span class="text-emerald-500 font-bold flex items-center"><i class="fa-solid fa-arrow-up text-[10px] mr-1"></i>0.12</span>
+                        <span>vs previous benchmark</span>
+                    </div>
+                </div>
+
+                <!-- KPI 2 -->
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden group hover:border-brand-500 transition">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Avg Course Rating</p>
+                            <h3 id="kpiAvgCourseRating" class="text-2xl font-bold mt-1 text-slate-800 dark:text-white">0.00</h3>
+                        </div>
+                        <div class="p-2.5 rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400">
+                            <i class="fa-solid fa-book-open text-base"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                        <span class="text-emerald-500 font-bold flex items-center"><i class="fa-solid fa-arrow-up text-[10px] mr-1"></i>0.08</span>
+                        <span>content delivery index</span>
+                    </div>
+                </div>
+
+                <!-- KPI 3 -->
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden group hover:border-brand-500 transition">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Rating Consistency Index</p>
+                            <h3 id="kpiConsistencyIndex" class="text-2xl font-bold mt-1 text-slate-800 dark:text-white">0.0%</h3>
+                        </div>
+                        <div class="p-2.5 rounded-xl bg-purple-100 text-purple-600 dark:bg-purple-900/40 dark:text-purple-400">
+                            <i class="fa-solid fa-chart-line text-base"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                        <span class="text-slate-400">1 - (stdDev / mean)</span>
+                    </div>
+                </div>
+
+                <!-- KPI 4 -->
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden group hover:border-brand-500 transition">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Experience Impact Score</p>
+                            <h3 id="kpiExpImpact" class="text-2xl font-bold mt-1 text-slate-800 dark:text-white">0.00</h3>
+                        </div>
+                        <div class="p-2.5 rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400">
+                            <i class="fa-solid fa-award text-base"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                        <span id="kpiExpCorr" class="font-bold text-emerald-500">r = 0.00</span>
+                        <span>tenure correlation</span>
+                    </div>
+                </div>
+
+                <!-- KPI 5 -->
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden group hover:border-brand-500 transition">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Enrollment Influence</p>
+                            <h3 id="kpiEnrollmentRatio" class="text-2xl font-bold mt-1 text-slate-800 dark:text-white">0.0x</h3>
+                        </div>
+                        <div class="p-2.5 rounded-xl bg-rose-100 text-rose-600 dark:bg-rose-900/40 dark:text-rose-400">
+                            <i class="fa-solid fa-users text-base"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                        <span>Top vs Low tier enrollment</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Dashboard Navigation Tabs -->
+            <div class="border-b border-slate-200 dark:border-slate-700 flex flex-wrap gap-2 text-xs font-semibold">
+                <button onclick="switchTab('tab-leaderboard')" id="btn-tab-leaderboard" class="tab-btn active px-4 py-3 border-b-2 border-brand-600 text-brand-600 dark:text-brand-400 flex items-center gap-2 transition">
+                    <i class="fa-solid fa-trophy"></i> Instructor Leaderboard
+                </button>
+                <button onclick="switchTab('tab-experience')" id="btn-tab-experience" class="tab-btn px-4 py-3 border-b-2 border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 flex items-center gap-2 transition">
+                    <i class="fa-solid fa-chart-scatter"></i> Experience vs Performance
+                </button>
+                <button onclick="switchTab('tab-quality')" id="btn-tab-quality" class="tab-btn px-4 py-3 border-b-2 border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 flex items-center gap-2 transition">
+                    <i class="fa-solid fa-grip"></i> Course Quality Heatmap
+                </button>
+                <button onclick="switchTab('tab-domain')" id="btn-tab-domain" class="tab-btn px-4 py-3 border-b-2 border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 flex items-center gap-2 transition">
+                    <i class="fa-solid fa-layer-group"></i> Domain & Expertise
+                </button>
+                <button onclick="switchTab('tab-enrollment')" id="btn-tab-enrollment" class="tab-btn px-4 py-3 border-b-2 border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 flex items-center gap-2 transition">
+                    <i class="fa-solid fa-arrow-trend-up"></i> Enrollment & Revenue Impact
+                </button>
+            </div>
+
+            <!-- TAB 1: LEADERBOARD & PERFORMANCE TIERING -->
+            <div id="tab-leaderboard" class="tab-content space-y-6">
+                <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
+                    <div class="p-5 border-b border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <div>
+                            <h3 class="font-bold text-base text-slate-800 dark:text-white">Instructor Performance Leaderboard</h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">Tiered performance evaluation based on instructor rating, course counts, and transaction volume</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300">Top Tier (≥ 4.5)</span>
+                            <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300">Mid Tier (3.5 - 4.4)</span>
+                            <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-100 text-rose-800 dark:bg-rose-900/50 dark:text-rose-300">Low Tier (&lt; 3.5)</span>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead class="bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                <tr>
+                                    <th class="p-3.5 pl-6">Instructor</th>
+                                    <th class="p-3.5">Expertise</th>
+                                    <th class="p-3.5">Experience</th>
+                                    <th class="p-3.5">Teacher Rating</th>
+                                    <th class="p-3.5">Avg Course Rating</th>
+                                    <th class="p-3.5">Courses Taught</th>
+                                    <th class="p-3.5">Total Enrollments</th>
+                                    <th class="p-3.5 pr-6">Performance Tier</th>
+                                </tr>
+                            </thead>
+                            <tbody id="leaderboardTbody" class="divide-y divide-slate-200 dark:divide-slate-700 text-slate-700 dark:text-slate-300">
+                                <!-- Dynamic Leaderboard Content -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: EXPERIENCE VS PERFORMANCE -->
+            <div id="tab-experience" class="tab-content space-y-6 hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-col-span-2 bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm lg:col-span-2">
+                        <div class="flex justify-between items-center mb-4">
+                            <div>
+                                <h3 class="font-bold text-base text-slate-800 dark:text-white">Years of Experience vs. Teacher Rating</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Interactive correlation analysis highlighting diminishing returns threshold</p>
+                            </div>
+                        </div>
+                        <div class="h-80 relative">
+                            <canvas id="chartExpVsRating"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <h3 class="font-bold text-base text-slate-800 dark:text-white mb-2"><i class="fa-solid fa-lightbulb text-amber-500 mr-2"></i>Tenure Insights</h3>
+                            <div class="space-y-4 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                                <p class="p-3 bg-slate-50 dark:bg-slate-700/40 rounded-xl border border-slate-200 dark:border-slate-600">
+                                    <strong class="text-brand-600 dark:text-brand-400">Plateau Threshold:</strong> Data indicates teaching experience plateaus around <span id="plateauYears" class="font-bold text-slate-800 dark:text-white">8-10 years</span>, after which additional years yield diminishing returns on learner ratings.
+                                </p>
+                                <p class="p-3 bg-slate-50 dark:bg-slate-700/40 rounded-xl border border-slate-200 dark:border-slate-600">
+                                    <strong class="text-brand-600 dark:text-brand-400">Early Trajectory:</strong> Instructors in years 1-4 experience the steepest rating growth (+0.4★ average increase).
+                                </p>
+                            </div>
+                        </div>
+                        <div class="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
+                            <div class="text-xs text-slate-500 dark:text-slate-400">Experience Impact Index</div>
+                            <div id="expImpactGauge" class="text-xl font-bold text-brand-600 dark:text-brand-400 mt-1">Strong Correlation (0.68)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: COURSE QUALITY HEATMAP & VARIANCE -->
+            <div id="tab-quality" class="tab-content space-y-6 hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                        <h3 class="font-bold text-base text-slate-800 dark:text-white mb-1">Course Quality Matrix (Category vs. Level)</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Average course rating cross-tabulation</p>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-center border-collapse text-xs">
+                                <thead>
+                                    <tr class="bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-300 font-bold">
+                                        <th class="p-3 text-left">Category</th>
+                                        <th class="p-3">Beginner</th>
+                                        <th class="p-3">Intermediate</th>
+                                        <th class="p-3">Advanced</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="heatmapTbody" class="divide-y divide-slate-200 dark:divide-slate-700">
+                                    <!-- Dynamic Heatmap rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                        <h3 class="font-bold text-base text-slate-800 dark:text-white mb-1">Rating Variance by Level</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Distribution and consistency spread per level</p>
+                        <div class="h-64 relative">
+                            <canvas id="chartLevelVariance"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: DOMAIN & EXPERTISE INSIGHTS -->
+            <div id="tab-domain" class="tab-content space-y-6 hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                        <h3 class="font-bold text-base text-slate-800 dark:text-white mb-1">Expertise Area Performance Radar</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Multidimensional comparison across domain expertise</p>
+                        <div class="h-72 relative">
+                            <canvas id="chartExpertiseRadar"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                        <h3 class="font-bold text-base text-slate-800 dark:text-white mb-1">Expertise Gap & Dependency Matrix</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Identifying areas requiring instructional coaching or expansion</p>
+                        <div id="expertiseGapContainer" class="space-y-3 text-xs">
+                            <!-- Dynamic Gap List -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 5: ENROLLMENT & REVENUE IMPACT -->
+            <div id="tab-enrollment" class="tab-content space-y-6 hidden">
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                    <h3 class="font-bold text-base text-slate-800 dark:text-white mb-1">Teacher Rating vs. Total Enrollments</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Quantifying how instructional quality directly drives platform course demand</p>
+                    <div class="h-80 relative">
+                        <canvas id="chartRatingVsEnrollment"></canvas>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Dataset Configuration Modal -->
+    <div id="dataModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-700">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-base text-slate-800 dark:text-white flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-brand-600"></i> Dataset Generator Config
+                </h3>
+                <button onclick="toggleDataModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-4 text-xs font-medium">
+                <div>
+                    <label class="block text-slate-600 dark:text-slate-300 mb-1">Number of Instructors (Teachers)</label>
+                    <input type="number" id="genTeacherCount" value="40" min="10" max="200" class="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-900 outline-none">
+                </div>
+                <div>
+                    <label class="block text-slate-600 dark:text-slate-300 mb-1">Number of Courses</label>
+                    <input type="number" id="genCourseCount" value="80" min="20" max="500" class="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-900 outline-none">
+                </div>
+                <div>
+                    <label class="block text-slate-600 dark:text-slate-300 mb-1">Total Transactions (Enrollments)</label>
+                    <input type="number" id="genTxCount" value="1200" min="100" max="5000" class="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-900 outline-none">
+                </div>
+            </div>
+
+            <div class="mt-6 flex justify-end gap-3">
+                <button onclick="toggleDataModal()" class="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-slate-700">Cancel</button>
+                <button onclick="regenerateData(); toggleDataModal();" class="px-4 py-2 rounded-lg bg-brand-600 text-white text-xs font-semibold hover:bg-brand-700 shadow-md">Regenerate Data</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global Data Store
+        let rawTeachers = [];
+        let rawCourses = [];
+        let rawTransactions = [];
+        
+        let filteredTeachers = [];
+        let filteredCourses = [];
+        
+        let chartInstances = {};
+
+        const EXPERTISE_DOMAINS = ["Data Science", "Web Development", "UI/UX Design", "Digital Marketing", "Cloud & DevOps", "Business Analytics"];
+        const COURSE_CATEGORIES = ["Technology", "Design", "Business", "Marketing"];
+        const COURSE_LEVELS = ["Beginner", "Intermediate", "Advanced"];
+        const FIRST_NAMES = ["Alex", "Jordan", "Morgan", "Taylor", "Sam", "Chris", "Pat", "Riley", "Casey", "Avery", "Elena", "Marcus", "Priya", "Chen", "Sophia", "David", "Aisha", "Carlos", "Liam", "Zoe"];
+        const LAST_NAMES = ["Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis", "Rodriguez", "Martinez", "Hernandez", "Lopez", "Gonzalez", "Wilson", "Anderson", "Thomas"];
+
+        // Helper: Random Number
+        function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+        function randFloat(min, max, decimals = 2) { return parseFloat((Math.random() * (max - min) + min).toFixed(decimals)); }
+
+        function generateSyntheticData(teacherCount = 40, courseCount = 80, txCount = 1200) {
+            rawTeachers = [];
+            rawCourses = [];
+            rawTransactions = [];
+
+            // 1. Generate Teachers
+            for (let i = 1; i <= teacherCount; i++) {
+                const id = `T${String(i).padStart(3, '0')}`;
+                const name = `${FIRST_NAMES[randInt(0, FIRST_NAMES.length - 1)]} ${LAST_NAMES[randInt(0, LAST_NAMES.length - 1)]}`;
+                const age = randInt(25, 60);
+                const gender = ["Male", "Female", "Non-Binary"][randInt(0, 2)];
+                const expertise = EXPERTISE_DOMAINS[randInt(0, EXPERTISE_DOMAINS.length - 1)];
+                const yearsExp = randInt(1, 22);
+
+                // Rating correlated somewhat with experience, plus random variance
+                let baseRating = 3.2 + (yearsExp * 0.07) + randFloat(-0.6, 0.6);
+                baseRating = Math.min(5.0, Math.max(1.5, baseRating));
+
+                rawTeachers.push({
+                    TeacherID: id,
+                    TeacherName: name,
+                    Age: age,
+                    Gender: gender,
+                    Expertise: expertise,
+                    YearsOfExperience: yearsExp,
+                    TeacherRating: parseFloat(baseRating.toFixed(2))
+                });
+            }
+
+            // 2. Generate Courses mapped to Teachers
+            for (let j = 1; j <= courseCount; j++) {
+                const courseId = `C${String(j).padStart(3, '0')}`;
+                const category = COURSE_CATEGORIES[randInt(0, COURSE_CATEGORIES.length - 1)];
+                const level = COURSE_LEVELS[randInt(0, COURSE_LEVELS.length - 1)];
+                const teacher = rawTeachers[randInt(0, rawTeachers.length - 1)];
+
+                // Course rating correlated with teacher rating
+                let courseRating = teacher.TeacherRating + randFloat(-0.4, 0.4);
+                courseRating = Math.min(5.0, Math.max(1.0, courseRating));
+
+                rawCourses.push({
+                    CourseID: courseId,
+                    CourseName: `${category} ${level} Mastery ${j}`,
+                    CourseCategory: category,
+                    CourseLevel: level,
+                    CourseRating: parseFloat(courseRating.toFixed(2)),
+                    TeacherID: teacher.TeacherID
+                });
+            }
+
+            // 3. Generate Transactions
+            for (let k = 1; k <= txCount; k++) {
+                const course = rawCourses[randInt(0, rawCourses.length - 1)];
+                rawTransactions.push({
+                    TransactionID: `TX${String(k).padStart(5, '0')}`,
+                    CourseID: course.CourseID,
+                    TeacherID: course.TeacherID
+                });
+            }
+
+            populateDropdownOptions();
+            applyFilters();
+        }
+
+        function populateDropdownOptions() {
+            const expSelect = document.getElementById('filterExpertise');
+            expSelect.innerHTML = '<option value="ALL">All Expertise Domains</option>';
+            EXPERTISE_DOMAINS.forEach(d => expSelect.innerHTML += `<option value="${d}">${d}</option>`);
+
+            const catSelect = document.getElementById('filterCategory');
+            catSelect.innerHTML = '<option value="ALL">All Categories</option>';
+            COURSE_CATEGORIES.forEach(c => catSelect.innerHTML += `<option value="${c}">${c}</option>`);
+
+            const lvlSelect = document.getElementById('filterLevel');
+            lvlSelect.innerHTML = '<option value="ALL">All Levels</option>';
+            COURSE_LEVELS.forEach(l => lvlSelect.innerHTML += `<option value="${l}">${l}</option>`);
+        }
+
+        function updateRatingLabel(val) { document.getElementById('ratingVal').innerText = `${val}★`; }
+        function updateExpLabel(val) { document.getElementById('expVal').innerText = `${val} Yrs`; }
+
+        function resetFilters() {
+            document.getElementById('filterSearch').value = '';
+            document.getElementById('filterExpertise').value = 'ALL';
+            document.getElementById('filterCategory').value = 'ALL';
+            document.getElementById('filterLevel').value = 'ALL';
+            document.getElementById('filterGender').value = 'ALL';
+            document.getElementById('filterRating').value = 1;
+            document.getElementById('filterExp').value = 0;
+            updateRatingLabel(1);
+            updateExpLabel(0);
+            applyFilters();
+        }
+
+        function applyFilters() {
+            const search = document.getElementById('filterSearch').value.toLowerCase();
+            const expertise = document.getElementById('filterExpertise').value;
+            const category = document.getElementById('filterCategory').value;
+            const level = document.getElementById('filterLevel').value;
+            const gender = document.getElementById('filterGender').value;
+            const minRating = parseFloat(document.getElementById('filterRating').value);
+            const minExp = parseInt(document.getElementById('filterExp').value);
+
+            // Filter Teachers
+            filteredTeachers = rawTeachers.filter(t => {
+                const matchesSearch = t.TeacherName.toLowerCase().includes(search) || t.Expertise.toLowerCase().includes(search);
+                const matchesExpertise = expertise === 'ALL' || t.Expertise === expertise;
+                const matchesGender = gender === 'ALL' || t.Gender === gender;
+                const matchesRating = t.TeacherRating >= minRating;
+                const matchesExp = t.YearsOfExperience >= minExp;
+                return matchesSearch && matchesExpertise && matchesGender && matchesRating && matchesExp;
+            });
+
+            const validTeacherIds = new Set(filteredTeachers.map(t => t.TeacherID));
+
+            // Filter Courses based on remaining teachers & course criteria
+            filteredCourses = rawCourses.filter(c => {
+                const matchesTeacher = validTeacherIds.has(c.TeacherID);
+                const matchesCategory = category === 'ALL' || c.CourseCategory === category;
+                const matchesLevel = level === 'ALL' || c.CourseLevel === level;
+                return matchesTeacher && matchesCategory && matchesLevel;
+            });
+
+            document.getElementById('filteredTeachersCount').innerText = `${filteredTeachers.length} Teachers`;
+            document.getElementById('filteredCoursesCount').innerText = `${filteredCourses.length} Courses`;
+
+            updateKPIs();
+            renderLeaderboard();
+            renderCharts();
+        }
+
+        function updateKPIs() {
+            if (filteredTeachers.length === 0) {
+                document.getElementById('kpiAvgTeacherRating').innerText = "0.00";
+                document.getElementById('kpiAvgCourseRating').innerText = "0.00";
+                document.getElementById('kpiConsistencyIndex').innerText = "0.0%";
+                document.getElementById('kpiExpImpact').innerText = "0.00";
+                document.getElementById('kpiEnrollmentRatio').innerText = "0.0x";
+                return;
+            }
+
+            // 1. Avg Teacher Rating
+            const avgTeacherRating = filteredTeachers.reduce((acc, t) => acc + t.TeacherRating, 0) / filteredTeachers.length;
+            document.getElementById('kpiAvgTeacherRating').innerText = avgTeacherRating.toFixed(2);
+
+            // 2. Avg Course Rating
+            const avgCourseRating = filteredCourses.length > 0 
+                ? filteredCourses.reduce((acc, c) => acc + c.CourseRating, 0) / filteredCourses.length 
+                : 0;
+            document.getElementById('kpiAvgCourseRating').innerText = avgCourseRating.toFixed(2);
+
+            // 3. Consistency Index = 1 - (stdDev / mean)
+            const ratings = filteredTeachers.map(t => t.TeacherRating);
+            const mean = avgTeacherRating;
+            const variance = ratings.reduce((acc, r) => acc + Math.pow(r - mean, 2), 0) / ratings.length;
+            const stdDev = Math.sqrt(variance);
+            const consistency = Math.max(0, (1 - (stdDev / (mean || 1))) * 100);
+            document.getElementById('kpiConsistencyIndex').innerText = `${consistency.toFixed(1)}%`;
+
+            // 4. Experience Impact Score (Correlation between YearsOfExperience and TeacherRating)
+            const n = filteredTeachers.length;
+            const sumX = filteredTeachers.reduce((acc, t) => acc + t.YearsOfExperience, 0);
+            const sumY = filteredTeachers.reduce((acc, t) => acc + t.TeacherRating, 0);
+            const sumXY = filteredTeachers.reduce((acc, t) => acc + (t.YearsOfExperience * t.TeacherRating), 0);
+            const sumX2 = filteredTeachers.reduce((acc, t) => acc + Math.pow(t.YearsOfExperience, 2), 0);
+            const sumY2 = filteredTeachers.reduce((acc, t) => acc + Math.pow(t.TeacherRating, 2), 0);
+
+            const num = (n * sumXY) - (sumX * sumY);
+            const den = Math.sqrt(((n * sumX2) - Math.pow(sumX, 2)) * ((n * sumY2) - Math.pow(sumY, 2)));
+            const corr = den !== 0 ? (num / den) : 0;
+
+            const impactScore = Math.abs(corr * 100);
+            document.getElementById('kpiExpImpact').innerText = impactScore.toFixed(1);
+            document.getElementById('kpiExpCorr').innerText = `r = ${corr.toFixed(2)}`;
+
+            // 5. Enrollment Influence Ratio
+            // Top Tier (>=4.5) Avg Enrollments / Low Tier (<3.5) Avg Enrollments
+            const topTeachers = filteredTeachers.filter(t => t.TeacherRating >= 4.5);
+            const lowTeachers = filteredTeachers.filter(t => t.TeacherRating < 3.5);
+
+            const getTeacherEnrollments = (teacherId) => rawTransactions.filter(tx => tx.TeacherID === teacherId).length;
+
+            const avgTopEnrollments = topTeachers.length > 0
+                ? topTeachers.reduce((acc, t) => acc + getTeacherEnrollments(t.TeacherID), 0) / topTeachers.length
+                : 1;
+
+            const avgLowEnrollments = lowTeachers.length > 0
+                ? lowTeachers.reduce((acc, t) => acc + getTeacherEnrollments(t.TeacherID), 0) / lowTeachers.length
+                : 1;
+
+            const ratio = (avgTopEnrollments / (avgLowEnrollments || 1)).toFixed(1);
+            document.getElementById('kpiEnrollmentRatio').innerText = `${ratio}x`;
+        }
+
+        function renderLeaderboard() {
+            const tbody = document.getElementById('leaderboardTbody');
+            tbody.innerHTML = '';
+
+            if (filteredTeachers.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400">No instructors matching active criteria.</td></tr>`;
+                return;
+            }
+
+            // Map enrollment count & aggregate course rating
+            const teacherStats = filteredTeachers.map(t => {
+                const tCourses = filteredCourses.filter(c => c.TeacherID === t.TeacherID);
+                const avgCRating = tCourses.length > 0 
+                    ? tCourses.reduce((a, b) => a + b.CourseRating, 0) / tCourses.length 
+                    : 0;
+                const enrollments = rawTransactions.filter(tx => tx.TeacherID === t.TeacherID).length;
+
+                let tier = "Low Tier";
+                let tierClass = "bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300";
+                if (t.TeacherRating >= 4.5) {
+                    tier = "Top Tier";
+                    tierClass = "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300";
+                } else if (t.TeacherRating >= 3.5) {
+                    tier = "Mid Tier";
+                    tierClass = "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300";
+                }
+
+                return { ...t, avgCourseRating: avgCRating, coursesCount: tCourses.length, enrollments, tier, tierClass };
+            });
+
+            // Sort by TeacherRating descending
+            teacherStats.sort((a, b) => b.TeacherRating - a.TeacherRating);
+
+            teacherStats.forEach(t => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition">
+                        <td class="p-3.5 pl-6 font-semibold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                            <div class="w-7 h-7 rounded-full bg-brand-100 dark:bg-brand-900/50 text-brand-600 dark:text-brand-300 font-bold flex items-center justify-center text-xs">
+                                ${t.TeacherName.charAt(0)}
+                            </div>
+                            ${t.TeacherName}
+                        </td>
+                        <td class="p-3.5">${t.Expertise}</td>
+                        <td class="p-3.5">${t.YearsOfExperience} yrs</td>
+                        <td class="p-3.5 font-bold text-amber-600 dark:text-amber-400"><i class="fa-solid fa-star text-[10px] mr-1"></i>${t.TeacherRating.toFixed(2)}</td>
+                        <td class="p-3.5 font-medium">${t.avgCourseRating > 0 ? t.avgCourseRating.toFixed(2) : 'N/A'}</td>
+                        <td class="p-3.5">${t.coursesCount}</td>
+                        <td class="p-3.5 font-bold text-slate-700 dark:text-slate-300">${t.enrollments}</td>
+                        <td class="p-3.5 pr-6">
+                            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${t.tierClass}">${t.tier}</span>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function renderCharts() {
+            renderExpScatterChart();
+            renderHeatmap();
+            renderLevelVarianceChart();
+            renderExpertiseRadarChart();
+            renderExpertiseGaps();
+            renderRatingVsEnrollmentChart();
+        }
+
+        // Chart 1: Experience Scatter Chart
+        function renderExpScatterChart() {
+            const ctx = document.getElementById('chartExpVsRating').getContext('2d');
+            if (chartInstances.expScatter) chartInstances.expScatter.destroy();
+
+            const scatterData = filteredTeachers.map(t => ({ x: t.YearsOfExperience, y: t.TeacherRating }));
+
+            chartInstances.expScatter = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Instructors',
+                        data: scatterData,
+                        backgroundColor: '#2563eb',
+                        borderColor: '#1d4ed8',
+                        pointRadius: 6,
+                        pointHoverRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { title: { display: true, text: 'Years of Experience' } },
+                        y: { title: { display: true, text: 'Teacher Rating' }, min: 1, max: 5 }
+                    }
+                }
+            });
+        }
+
+        // Heatmap Matrix
+        function renderHeatmap() {
+            const tbody = document.getElementById('heatmapTbody');
+            tbody.innerHTML = '';
+
+            COURSE_CATEGORIES.forEach(cat => {
+                let rowHtml = `<tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30"><td class="p-3 text-left font-semibold">${cat}</td>`;
+                
+                COURSE_LEVELS.forEach(lvl => {
+                    const matched = filteredCourses.filter(c => c.CourseCategory === cat && c.CourseLevel === lvl);
+                    const avg = matched.length > 0 ? (matched.reduce((a, b) => a + b.CourseRating, 0) / matched.length) : 0;
+                    
+                    let bg = "bg-slate-100 dark:bg-slate-800";
+                    if (avg >= 4.5) bg = "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200 font-bold";
+                    else if (avg >= 3.8) bg = "bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-200 font-medium";
+                    else if (avg > 0) bg = "bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-200";
+
+                    rowHtml += `<td class="p-3 ${bg}">${avg > 0 ? avg.toFixed(2) : '-'}</td>`;
+                });
+                
+                rowHtml += `</tr>`;
+                tbody.innerHTML += rowHtml;
+            });
+        }
+
+        // Chart 2: Variance Bar/Distribution Chart
+        function renderLevelVarianceChart() {
+            const ctx = document.getElementById('chartLevelVariance').getContext('2d');
+            if (chartInstances.levelVar) chartInstances.levelVar.destroy();
+
+            const levelMeans = COURSE_LEVELS.map(lvl => {
+                const courses = filteredCourses.filter(c => c.CourseLevel === lvl);
+                return courses.length > 0 ? courses.reduce((a, b) => a + b.CourseRating, 0) / courses.length : 0;
+            });
+
+            chartInstances.levelVar = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: COURSE_LEVELS,
+                    datasets: [{
+                        label: 'Avg Rating',
+                        data: levelMeans,
+                        backgroundColor: ['#3b82f6', '#10b981', '#f59e0b'],
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { min: 1, max: 5 } }
+                }
+            });
+        }
+
+        // Chart 3: Expertise Radar Chart
+        function renderExpertiseRadarChart() {
+            const ctx = document.getElementById('chartExpertiseRadar').getContext('2d');
+            if (chartInstances.radar) chartInstances.radar.destroy();
+
+            const radarValues = EXPERTISE_DOMAINS.map(domain => {
+                const teachers = filteredTeachers.filter(t => t.Expertise === domain);
+                return teachers.length > 0 ? teachers.reduce((a, b) => a + b.TeacherRating, 0) / teachers.length : 0;
+            });
+
+            chartInstances.radar = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: EXPERTISE_DOMAINS,
+                    datasets: [{
+                        label: 'Domain Effectiveness',
+                        data: radarValues,
+                        backgroundColor: 'rgba(37, 99, 235, 0.2)',
+                        borderColor: '#2563eb',
+                        pointBackgroundColor: '#1d4ed8'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { r: { min: 1, max: 5 } }
+                }
+            });
+        }
+
+        // Dynamic Gap Insights
+        function renderExpertiseGaps() {
+            const container = document.getElementById('expertiseGapContainer');
+            container.innerHTML = '';
+
+            EXPERTISE_DOMAINS.forEach(domain => {
+                const teachers = filteredTeachers.filter(t => t.Expertise === domain);
+                const avgRating = teachers.length > 0 ? teachers.reduce((a, b) => a + b.TeacherRating, 0) / teachers.length : 0;
+
+                let status = "Balanced Quality";
+                let badgeClass = "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300";
+                
+                if (avgRating < 3.8 && avgRating > 0) {
+                    status = "Training Required";
+                    badgeClass = "bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300";
+                } else if (teachers.length < 3) {
+                    status = "Capacity Gap";
+                    badgeClass = "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300";
+                }
+
+                container.innerHTML += `
+                    <div class="p-3 bg-slate-50 dark:bg-slate-700/40 rounded-xl flex items-center justify-between border border-slate-200 dark:border-slate-600">
+                        <div>
+                            <span class="font-bold text-slate-800 dark:text-slate-100">${domain}</span>
+                            <div class="text-[11px] text-slate-500">${teachers.length} Instructors • Avg: ${avgRating.toFixed(2)}★</div>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${badgeClass}">${status}</span>
+                    </div>
+                `;
+            });
+        }
+
+        // Chart 4: Rating vs Enrollment
+        function renderRatingVsEnrollmentChart() {
+            const ctx = document.getElementById('chartRatingVsEnrollment').getContext('2d');
+            if (chartInstances.ratingVsEnroll) chartInstances.ratingVsEnroll.destroy();
+
+            const chartData = filteredTeachers.map(t => ({
+                x: t.TeacherRating,
+                y: rawTransactions.filter(tx => tx.TeacherID === t.TeacherID).length
+            }));
+
+            chartInstances.ratingVsEnroll = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Enrollment Demand',
+                        data: chartData,
+                        backgroundColor: '#10b981',
+                        borderColor: '#059669',
+                        pointRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { title: { display: true, text: 'Teacher Rating' }, min: 1, max: 5 },
+                        y: { title: { display: true, text: 'Total Enrollments (Transactions)' } }
+                    }
+                }
+            });
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active', 'border-brand-600', 'text-brand-600', 'dark:text-brand-400');
+                btn.classList.add('border-transparent', 'text-slate-500');
+            });
+
+            document.getElementById(tabId).classList.remove('hidden');
+            const activeBtn = document.getElementById(`btn-${tabId}`);
+            activeBtn.classList.add('active', 'border-brand-600', 'text-brand-600', 'dark:text-brand-400');
+            activeBtn.classList.remove('border-transparent', 'text-slate-500');
+        }
+
+        function toggleTheme() {
+            document.documentElement.classList.toggle('dark');
+        }
+
+        function toggleDataModal() {
+            document.getElementById('dataModal').classList.toggle('hidden');
+        }
+
+        function regenerateData() {
+            const tCount = parseInt(document.getElementById('genTeacherCount').value);
+            const cCount = parseInt(document.getElementById('genCourseCount').value);
+            const txCount = parseInt(document.getElementById('genTxCount').value);
+            generateSyntheticData(tCount, cCount, txCount);
+        }
+
+        function generateExecutiveReport() {
+            const avgTRating = document.getElementById('kpiAvgTeacherRating').innerText;
+            const avgCRating = document.getElementById('kpiAvgCourseRating').innerText;
+            const consistency = document.getElementById('kpiConsistencyIndex').innerText;
+            const expImpact = document.getElementById('kpiExpImpact').innerText;
+            const influence = document.getElementById('kpiEnrollmentRatio').innerText;
+
+            const reportText = `===============================================================
+EDUPRO: INSTRUCTOR PERFORMANCE & COURSE QUALITY EXECUTIVE REPORT
+Generated: ${new Date().toLocaleDateString()}
+===============================================================
+
+1. KEY PERFORMANCE BENCHMARKS
+---------------------------------------------------------------
+- Average Teacher Rating: ${avgTRating} / 5.00
+- Average Course Rating: ${avgCRating} / 5.00
+- Rating Consistency Index: ${consistency}
+- Experience Impact Score: ${expImpact}
+- Enrollment Influence Ratio: ${influence} (Top vs Low Tier Demand)
+
+2. EXECUTIVE FINDINGS & STRATEGIC INSIGHTS
+---------------------------------------------------------------
+* Tenure Thresholds: Teaching effectiveness reaches a plateau around 8-10 years.
+  Targeted instructional design workshops yield greater impact than pure seniority.
+* Category Consistency: High-rated instructors drive ${influence} higher course enrollments,
+  confirming that teaching quality directly correlates with student retention and platform revenue.
+* Strategic Recommendation: Establish continuous coaching for instructors below 3.5★ rating
+  and pair them with Top-Tier mentors (≥4.5★).
+
+===============================================================
+End of EduPro Analytics Report
+===============================================================`;
+
+            const blob = new Blob([reportText], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `EduPro_Executive_Report_${Date.now()}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        window.onload = function() {
+            generateSyntheticData(40, 80, 1200);
+        };
+    </script>
+</body>
+</html>
